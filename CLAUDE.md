@@ -7,6 +7,12 @@ Dans l'ordre :
 Lorsque tu crées un use case, je veux que tu utilises le pattern Port et Adapter.
 Pour les tests de use case, tu dois utiliser une implémentation ForTest.
 
+Lors du test de use case, le use case est appelé `sut` (system under test).
+Je veux que les dépendances soient directement passées au constructeur du use case.
+
+
+
+
 Pour l'injection de dépendance, tu vas utiliser pyqure :
 
 ## Injection de dépendances avec pyqure
