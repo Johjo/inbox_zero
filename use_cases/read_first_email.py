@@ -1,11 +1,13 @@
 from typing import Optional
 from email_reader import EmailData
-from ports.email_repository import EmailRepository
+from ports.email_repository import EmailRepository, EMAIL_REPOSITORY_KEY
+from pyqure import pyqure, PyqureMemory
 
 
 class ReadFirstEmailUseCase:
-    def __init__(self, email_repository: EmailRepository):
-        self.email_repository = email_repository
+    def __init__(self, dependencies: PyqureMemory):
+        (provide, inject) = pyqure(dependencies)
+        self.email_repository = inject(EMAIL_REPOSITORY_KEY)
 
     def execute(self, folder: str = "INBOX") -> Optional[EmailData]:
         return self.email_repository.get_first_email(folder)
