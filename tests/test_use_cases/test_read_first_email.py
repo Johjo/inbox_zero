@@ -7,6 +7,9 @@ from ports.email_repository import EmailRepository
 from use_cases.read_first_email import ReadFirstEmailUseCase
 
 
+EMAIL_REPOSITORY_KEY = Key("email_repository", EmailRepository)
+
+
 class EmailRepositoryForTest(EmailRepository):
     def __init__(self):
         self._emails: Dict[str, List[EmailData]] = {}
@@ -32,7 +35,7 @@ def dependencies():
 def repository(dependencies):
     (provide, inject) = pyqure(dependencies)
     repo = EmailRepositoryForTest()
-    provide(Key("email_repository", EmailRepository), repo)
+    provide(EMAIL_REPOSITORY_KEY, repo)
     return repo
 
 
