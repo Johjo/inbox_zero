@@ -12,3 +12,6 @@ class EmailRepositoryImap(EmailRepository):
         if len(emails) == 0:
             return None
         return emails[0]
+
+    def archive_first_email(self, folder: str) -> bool:
+        return self.email_reader.archive_first_email(folder=folder)

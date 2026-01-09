@@ -64,6 +64,17 @@ class EmailReader:
             attachments=attachment_names,
         )
 
+    def archive_first_email(self, folder: str = "INBOX", archive_folder: str = "Archive") -> bool:
+        with self._get_mailbox().login(self.username, self.password, initial_folder=folder) as mailbox:
+            messages = list(mailbox.fetch(limit=1, reverse=False))
+
+            if not messages:
+                return False
+
+            msg = messages[0]
+            mailbox.move(msg.uid, archive_folder)
+            return True
+
     def download_attachments(self, folder: str = "INBOX", save_dir: str = "./attachments") -> List[Path]:
         saved_files = []
         save_path = Path(save_dir)

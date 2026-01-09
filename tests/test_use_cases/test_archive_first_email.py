@@ -4,7 +4,7 @@ from pyqure import Key, pyqure, PyqureMemory
 
 from email_reader import EmailData
 from ports.email_repository import EmailRepository, EMAIL_REPOSITORY_KEY
-from use_cases.read_first_email import ReadFirstEmailUseCase
+from use_cases.archive_first_email import ArchiveFirstEmailUseCase
 
 
 class EmailRepositoryForTest(EmailRepository):
@@ -33,6 +33,11 @@ class EmailRepositoryForTest(EmailRepository):
 
         return True
 
+    def get_emails_count(self, folder: str) -> int:
+        if folder not in self._emails:
+            return 0
+        return len(self._emails[folder])
+
 
 @pytest.fixture
 def dependencies():
@@ -48,7 +53,7 @@ def repository(dependencies):
     return repo
 
 
-def test_read_first_email_from_inbox(dependencies, repository):
+def test_archive_first_email_from_inbox(dependencies, repository):
     email = EmailData(
         subject="Test Subject",
         sender="sender@test.com",
@@ -59,25 +64,27 @@ def test_read_first_email_from_inbox(dependencies, repository):
     )
     repository.add_email("INBOX", email)
 
-    sut = ReadFirstEmailUseCase(dependencies)
+    sut = ArchiveFirstEmailUseCase(dependencies)
 
     result = sut.execute("INBOX")
 
-    assert result is not None
-    assert result.subject == "Test Subject"
-    assert result.sender == "sender@test.com"
-    assert result.body_text == "Test body"
+    assert result is True
+    assert repository.get_emails_count("INBOX") == 0
+    assert repository.get_emails_count("Archive") == 1
+    archived_email = repository.get_first_email("Archive")
+    assert archived_email is not None
+    assert archived_email.subject == "Test Subject"
 
 
-def test_read_first_email_when_inbox_is_empty(dependencies, repository):
-    sut = ReadFirstEmailUseCase(dependencies)
+def test_archive_first_email_when_inbox_is_empty(dependencies, repository):
+    sut = ArchiveFirstEmailUseCase(dependencies)
 
     result = sut.execute("INBOX")
 
-    assert result is None
+    assert result is False
 
 
-def test_read_first_email_when_multiple_emails(dependencies, repository):
+def test_archive_first_email_when_multiple_emails(dependencies, repository):
     first_email = EmailData(
         subject="First Email",
         sender="sender1@test.com",
@@ -98,16 +105,22 @@ def test_read_first_email_when_multiple_emails(dependencies, repository):
     repository.add_email("INBOX", first_email)
     repository.add_email("INBOX", second_email)
 
-    sut = ReadFirstEmailUseCase(dependencies)
+    sut = ArchiveFirstEmailUseCase(dependencies)
 
     result = sut.execute("INBOX")
 
-    assert result is not None
-    assert result.subject == "First Email"
-    assert result.sender == "sender1@test.com"
+    assert result is True
+    assert repository.get_emails_count("INBOX") == 1
+    assert repository.get_emails_count("Archive") == 1
+    remaining_email = repository.get_first_email("INBOX")
+    assert remaining_email is not None
+    assert remaining_email.subject == "Second Email"
+    archived_email = repository.get_first_email("Archive")
+    assert archived_email is not None
+    assert archived_email.subject == "First Email"
 
 
-def test_read_first_email_from_different_folder(dependencies, repository):
+def test_archive_first_email_from_different_folder(dependencies, repository):
     email = EmailData(
         subject="Sent Email",
         sender="me@test.com",
@@ -118,9 +131,10 @@ def test_read_first_email_from_different_folder(dependencies, repository):
     )
     repository.add_email("SENT", email)
 
-    sut = ReadFirstEmailUseCase(dependencies)
+    sut = ArchiveFirstEmailUseCase(dependencies)
 
     result = sut.execute("SENT")
 
-    assert result is not None
-    assert result.subject == "Sent Email"
+    assert result is True
+    assert repository.get_emails_count("SENT") == 0
+    assert repository.get_emails_count("Archive") == 1

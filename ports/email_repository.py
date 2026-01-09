@@ -9,5 +9,9 @@ class EmailRepository(ABC):
     def get_first_email(self, folder: str) -> Optional[EmailData]:
         pass
 
+    @abstractmethod
+    def archive_first_email(self, folder: str) -> bool:
+        pass
+
 
 EMAIL_REPOSITORY_KEY: Key[EmailRepository] = Key("email_repository", EmailRepository)
