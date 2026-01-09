@@ -22,3 +22,6 @@ dev = [
 
 [tool.setuptools]
 py-modules = ["main", "app"]
+
+[tool.mypy]
+ignore_missing_imports = true

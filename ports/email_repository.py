@@ -10,4 +10,4 @@ class EmailRepository(ABC):
         pass
 
 
-EMAIL_REPOSITORY_KEY = Key("email_repository", EmailRepository)
+EMAIL_REPOSITORY_KEY: Key[EmailRepository] = Key("email_repository", EmailRepository)

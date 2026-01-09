@@ -44,7 +44,7 @@ class EmailReader:
         emails = []
 
         with self._get_mailbox().login(self.username, self.password, initial_folder=folder) as mailbox:
-            messages = mailbox.fetch(limit=limit, reverse=True)
+            messages = mailbox.fetch(limit=limit, reverse=False)
 
             for msg in messages:
                 email_data = self._parse_message(msg)

@@ -10,7 +10,9 @@ Pour les tests de use case, tu dois utiliser une implémentation ForTest.
 Lors du test de use case, le use case est appelé `sut` (system under test).
 Je veux que les dépendances soient directement passées au constructeur du use case.
 
+Pour lancer les tests, il faut utiliser `uv run pytest`
 
+- pas de retry dans les tests, en règle générale pas de boucle
 
 
 Pour l'injection de dépendance, tu vas utiliser pyqure :
