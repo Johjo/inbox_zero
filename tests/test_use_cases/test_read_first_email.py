@@ -25,17 +25,18 @@ class EmailRepositoryForTest(EmailRepository):
 @pytest.fixture
 def dependencies():
     memory: PyqureMemory = {}
-    (provide, inject) = pyqure(memory)
-
-    repository = EmailRepositoryForTest()
-    provide(Key("email_repository", EmailRepository), repository)
-
-    return inject, repository
+    return memory
 
 
-def test_read_first_email_from_inbox(dependencies):
-    inject, repository = dependencies
+@pytest.fixture
+def repository(dependencies):
+    (provide, inject) = pyqure(dependencies)
+    repo = EmailRepositoryForTest()
+    provide(Key("email_repository", EmailRepository), repo)
+    return repo
 
+
+def test_read_first_email_from_inbox(repository):
     email = EmailData(
         subject="Test Subject",
         sender="sender@test.com",
@@ -46,10 +47,9 @@ def test_read_first_email_from_inbox(dependencies):
     )
     repository.add_email("INBOX", email)
 
-    repo = inject(Key("email_repository", EmailRepository))
-    use_case = ReadFirstEmailUseCase(repo)
+    sut = ReadFirstEmailUseCase(repository)
 
-    result = use_case.execute("INBOX")
+    result = sut.execute("INBOX")
 
     assert result is not None
     assert result.subject == "Test Subject"
@@ -57,20 +57,15 @@ def test_read_first_email_from_inbox(dependencies):
     assert result.body_text == "Test body"
 
 
-def test_read_first_email_when_inbox_is_empty(dependencies):
-    inject, repository = dependencies
+def test_read_first_email_when_inbox_is_empty(repository):
+    sut = ReadFirstEmailUseCase(repository)
 
-    repo = inject(Key("email_repository", EmailRepository))
-    use_case = ReadFirstEmailUseCase(repo)
-
-    result = use_case.execute("INBOX")
+    result = sut.execute("INBOX")
 
     assert result is None
 
 
-def test_read_first_email_when_multiple_emails(dependencies):
-    inject, repository = dependencies
-
+def test_read_first_email_when_multiple_emails(repository):
     first_email = EmailData(
         subject="First Email",
         sender="sender1@test.com",
@@ -91,19 +86,16 @@ def test_read_first_email_when_multiple_emails(dependencies):
     repository.add_email("INBOX", first_email)
     repository.add_email("INBOX", second_email)
 
-    repo = inject(Key("email_repository", EmailRepository))
-    use_case = ReadFirstEmailUseCase(repo)
+    sut = ReadFirstEmailUseCase(repository)
 
-    result = use_case.execute("INBOX")
+    result = sut.execute("INBOX")
 
     assert result is not None
     assert result.subject == "First Email"
     assert result.sender == "sender1@test.com"
 
 
-def test_read_first_email_from_different_folder(dependencies):
-    inject, repository = dependencies
-
+def test_read_first_email_from_different_folder(repository):
     email = EmailData(
         subject="Sent Email",
         sender="me@test.com",
@@ -114,10 +106,9 @@ def test_read_first_email_from_different_folder(dependencies):
     )
     repository.add_email("SENT", email)
 
-    repo = inject(Key("email_repository", EmailRepository))
-    use_case = ReadFirstEmailUseCase(repo)
+    sut = ReadFirstEmailUseCase(repository)
 
-    result = use_case.execute("SENT")
+    result = sut.execute("SENT")
 
     assert result is not None
     assert result.subject == "Sent Email"
