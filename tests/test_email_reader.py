@@ -11,7 +11,7 @@ from email_reader import EmailReader
 
 
 @pytest.fixture(scope="function")
-def greenmail_container():
+def greenmail():
     container = DockerContainer("greenmail/standalone:2.1.0-alpha-2")
     container.with_exposed_ports(3025, 3143)
     container.with_env("GREENMAIL_OPTS", "-Dgreenmail.setup.test.all -Dgreenmail.hostname=0.0.0.0 -Dgreenmail.auth.disabled=false -Dgreenmail.verbose")
@@ -25,9 +25,7 @@ def greenmail_container():
     container.stop()
 
 
-def send_test_email(container, subject="Test Email", body="This is a test email body"):
-    smtp_port = container.get_exposed_port(3025)
-
+def send_test_email(smtp_port, subject="Test Email", body="This is a test email body"):
     msg = MIMEMultipart()
     msg["From"] = "sender@test.com"
     msg["To"] = "test@test.com"
@@ -39,9 +37,7 @@ def send_test_email(container, subject="Test Email", body="This is a test email 
         server.sendmail("sender@test.com", "test@test.com", msg.as_string())
 
 
-def send_test_email_with_attachment(container):
-    smtp_port = container.get_exposed_port(3025)
-
+def send_test_email_with_attachment(smtp_port):
     msg = MIMEMultipart()
     msg["From"] = "sender@test.com"
     msg["To"] = "test@test.com"
@@ -59,10 +55,11 @@ def send_test_email_with_attachment(container):
         server.sendmail("sender@test.com", "test@test.com", msg.as_string())
 
 
-def test_fetch_emails_basic(greenmail_container):
-    send_test_email(greenmail_container, subject="Hello World", body="Test body content")
+def test_fetch_emails_basic(greenmail):
+    smtp_port = greenmail.get_exposed_port(3025)
+    imap_port = greenmail.get_exposed_port(3143)
 
-    imap_port = greenmail_container.get_exposed_port(3143)
+    send_test_email(smtp_port, subject="Hello World", body="Test body content")
 
     reader = EmailReader(
         host="localhost",
@@ -80,12 +77,13 @@ def test_fetch_emails_basic(greenmail_container):
     assert "Test body content" in emails[0].body_text
 
 
-def test_fetch_multiple_emails(greenmail_container):
-    send_test_email(greenmail_container, subject="Email 1", body="Body 1")
-    send_test_email(greenmail_container, subject="Email 2", body="Body 2")
-    send_test_email(greenmail_container, subject="Email 3", body="Body 3")
+def test_fetch_multiple_emails(greenmail):
+    smtp_port = greenmail.get_exposed_port(3025)
+    imap_port = greenmail.get_exposed_port(3143)
 
-    imap_port = greenmail_container.get_exposed_port(3143)
+    send_test_email(smtp_port, subject="Email 1", body="Body 1")
+    send_test_email(smtp_port, subject="Email 2", body="Body 2")
+    send_test_email(smtp_port, subject="Email 3", body="Body 3")
 
     reader = EmailReader(
         host="localhost",
@@ -104,12 +102,13 @@ def test_fetch_multiple_emails(greenmail_container):
     assert "Email 3" in subjects
 
 
-def test_fetch_emails_with_limit(greenmail_container):
-    send_test_email(greenmail_container, subject="Email 1")
-    send_test_email(greenmail_container, subject="Email 2")
-    send_test_email(greenmail_container, subject="Email 3")
+def test_fetch_emails_with_limit(greenmail):
+    smtp_port = greenmail.get_exposed_port(3025)
+    imap_port = greenmail.get_exposed_port(3143)
 
-    imap_port = greenmail_container.get_exposed_port(3143)
+    send_test_email(smtp_port, subject="Email 1")
+    send_test_email(smtp_port, subject="Email 2")
+    send_test_email(smtp_port, subject="Email 3")
 
     reader = EmailReader(
         host="localhost",
@@ -124,10 +123,11 @@ def test_fetch_emails_with_limit(greenmail_container):
     assert len(emails) == 2
 
 
-def test_email_with_attachment(greenmail_container):
-    send_test_email_with_attachment(greenmail_container)
+def test_email_with_attachment(greenmail):
+    smtp_port = greenmail.get_exposed_port(3025)
+    imap_port = greenmail.get_exposed_port(3143)
 
-    imap_port = greenmail_container.get_exposed_port(3143)
+    send_test_email_with_attachment(smtp_port)
 
     reader = EmailReader(
         host="localhost",
@@ -145,10 +145,11 @@ def test_email_with_attachment(greenmail_container):
     assert "test.txt" in emails[0].attachments
 
 
-def test_download_attachments(greenmail_container, tmp_path):
-    send_test_email_with_attachment(greenmail_container)
+def test_download_attachments(greenmail, tmp_path):
+    smtp_port = greenmail.get_exposed_port(3025)
+    imap_port = greenmail.get_exposed_port(3143)
 
-    imap_port = greenmail_container.get_exposed_port(3143)
+    send_test_email_with_attachment(smtp_port)
 
     reader = EmailReader(
         host="localhost",
