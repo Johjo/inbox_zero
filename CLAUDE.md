@@ -1,0 +1,1 @@
+Lors des commits, on applique conventionnal commit
