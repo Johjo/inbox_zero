@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Optional
-from email_reader import EmailData
+from email_reader import EmailData, EmailUid
 from pyqure import Key
 
 
@@ -10,7 +10,7 @@ class EmailRepository(ABC):
         pass
 
     @abstractmethod
-    def archive_first_email(self, folder: str) -> bool:
+    def archive_first_email(self, folder: str, uid: EmailUid) -> bool:
         pass
 
 

@@ -21,15 +21,29 @@ class EmailRepositoryForTest(EmailRepository):
             return None
         return self._emails[folder][0]
 
-    def archive_first_email(self, folder: str) -> bool:
+    def archive_first_email(self, folder: str, uid: EmailUid) -> bool:
         if folder not in self._emails or len(self._emails[folder]) == 0:
             return False
 
-        email = self._emails[folder].pop(0)
+        # Chercher l'email par UID
+        email_to_archive = None
+        email_index = None
+        for index, email in enumerate(self._emails[folder]):
+            if email.uid == uid:
+                email_to_archive = email
+                email_index = index
+                break
 
+        if email_to_archive is None or email_index is None:
+            return False
+
+        # Retirer l'email du dossier source
+        self._emails[folder].pop(email_index)
+
+        # Ajouter l'email au dossier Archive
         if "Archive" not in self._emails:
             self._emails["Archive"] = []
-        self._emails["Archive"].append(email)
+        self._emails["Archive"].append(email_to_archive)
 
         return True
 

@@ -84,6 +84,11 @@ class EmailReader:
             mailbox.move(msg.uid, archive_folder)
             return True
 
+    def archive_email(self, folder: str = "INBOX", uid: EmailUid = EmailUid(""), archive_folder: str = "Archive") -> bool:
+        with self._get_mailbox().login(self.username, self.password, initial_folder=folder) as mailbox:
+            mailbox.move(uid.value, archive_folder)
+            return True
+
     def download_attachments(self, folder: str = "INBOX", save_dir: str = "./attachments") -> List[Path]:
         saved_files = []
         save_path = Path(save_dir)

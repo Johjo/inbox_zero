@@ -1,5 +1,5 @@
 from typing import Optional
-from email_reader import EmailReader, EmailData
+from email_reader import EmailReader, EmailData, EmailUid
 from ports.email_repository import EmailRepository
 
 
@@ -13,5 +13,5 @@ class EmailRepositoryImap(EmailRepository):
             return None
         return emails[0]
 
-    def archive_first_email(self, folder: str) -> bool:
-        return self.email_reader.archive_first_email(folder=folder)
+    def archive_first_email(self, folder: str, uid: EmailUid) -> bool:
+        return self.email_reader.archive_email(folder=folder, uid=uid)

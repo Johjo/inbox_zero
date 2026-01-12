@@ -21,15 +21,29 @@ class EmailRepositoryForTest(EmailRepository):
             return None
         return self._emails[folder][0]
 
-    def archive_first_email(self, folder: str) -> bool:
+    def archive_first_email(self, folder: str, uid: EmailUid) -> bool:
         if folder not in self._emails or len(self._emails[folder]) == 0:
             return False
 
-        email = self._emails[folder].pop(0)
+        # Chercher l'email par UID
+        email_to_archive = None
+        email_index = None
+        for index, email in enumerate(self._emails[folder]):
+            if email.uid == uid:
+                email_to_archive = email
+                email_index = index
+                break
 
+        if email_to_archive is None or email_index is None:
+            return False
+
+        # Retirer l'email du dossier source
+        self._emails[folder].pop(email_index)
+
+        # Ajouter l'email au dossier Archive
         if "Archive" not in self._emails:
             self._emails["Archive"] = []
-        self._emails["Archive"].append(email)
+        self._emails["Archive"].append(email_to_archive)
 
         return True
 
@@ -67,7 +81,7 @@ def test_archive_first_email_from_inbox(dependencies, repository):
 
     sut = ArchiveFirstEmailUseCase(dependencies)
 
-    result = sut.execute("INBOX")
+    result = sut.execute("INBOX", EmailUid("1"))
 
     assert result is True
     assert repository.get_emails_count("INBOX") == 0
@@ -80,7 +94,7 @@ def test_archive_first_email_from_inbox(dependencies, repository):
 def test_archive_first_email_when_inbox_is_empty(dependencies, repository):
     sut = ArchiveFirstEmailUseCase(dependencies)
 
-    result = sut.execute("INBOX")
+    result = sut.execute("INBOX", EmailUid("1"))
 
     assert result is False
 
@@ -110,7 +124,7 @@ def test_archive_first_email_when_multiple_emails(dependencies, repository):
 
     sut = ArchiveFirstEmailUseCase(dependencies)
 
-    result = sut.execute("INBOX")
+    result = sut.execute("INBOX", EmailUid("1"))
 
     assert result is True
     assert repository.get_emails_count("INBOX") == 1
@@ -137,7 +151,7 @@ def test_archive_first_email_from_different_folder(dependencies, repository):
 
     sut = ArchiveFirstEmailUseCase(dependencies)
 
-    result = sut.execute("SENT")
+    result = sut.execute("SENT", EmailUid("1"))
 
     assert result is True
     assert repository.get_emails_count("SENT") == 0
