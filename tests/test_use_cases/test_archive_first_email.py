@@ -2,7 +2,7 @@ from typing import Optional, Dict, List
 import pytest
 from pyqure import Key, pyqure, PyqureMemory
 
-from email_reader import EmailData
+from email_reader import EmailData, EmailUid
 from ports.email_repository import EmailRepository, EMAIL_REPOSITORY_KEY
 from use_cases.archive_first_email import ArchiveFirstEmailUseCase
 
@@ -55,6 +55,7 @@ def repository(dependencies):
 
 def test_archive_first_email_from_inbox(dependencies, repository):
     email = EmailData(
+        uid=EmailUid("1"),
         subject="Test Subject",
         sender="sender@test.com",
         date="2024-01-09T10:00:00",
@@ -86,6 +87,7 @@ def test_archive_first_email_when_inbox_is_empty(dependencies, repository):
 
 def test_archive_first_email_when_multiple_emails(dependencies, repository):
     first_email = EmailData(
+        uid=EmailUid("1"),
         subject="First Email",
         sender="sender1@test.com",
         date="2024-01-09T10:00:00",
@@ -94,6 +96,7 @@ def test_archive_first_email_when_multiple_emails(dependencies, repository):
         attachments=[]
     )
     second_email = EmailData(
+        uid=EmailUid("2"),
         subject="Second Email",
         sender="sender2@test.com",
         date="2024-01-09T11:00:00",
@@ -122,6 +125,7 @@ def test_archive_first_email_when_multiple_emails(dependencies, repository):
 
 def test_archive_first_email_from_different_folder(dependencies, repository):
     email = EmailData(
+        uid=EmailUid("1"),
         subject="Sent Email",
         sender="me@test.com",
         date="2024-01-09T10:00:00",

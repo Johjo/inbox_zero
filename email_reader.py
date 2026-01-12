@@ -5,8 +5,14 @@ from imap_tools import MailBox, BaseMailBox, MailMessage
 import imaplib
 
 
+@dataclass(frozen=True)
+class EmailUid:
+    value: str
+
+
 @dataclass
 class EmailData:
+    uid: EmailUid
     subject: str
     sender: str
     date: str
@@ -55,7 +61,10 @@ class EmailReader:
     def _parse_message(self, msg: MailMessage) -> EmailData:
         attachment_names = [att.filename for att in msg.attachments]
 
+        assert msg.uid is not None, "Email message must have a UID"
+
         return EmailData(
+            uid=EmailUid(msg.uid),
             subject=msg.subject,
             sender=msg.from_,
             date=msg.date.isoformat() if msg.date else "",
