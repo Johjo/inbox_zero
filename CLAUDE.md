@@ -65,12 +65,16 @@ def test_use_case(dependencies):
 ## Organisation des dossiers
 Les dossiers sont organisés de la manière suivantes en vertical slice architecture : 
 
+Le dossier app contient l'application développé avec streamlit. Pour le momment, l'app n'est pas testée et est considérée comme jetable
+
+
 - src
     - inbox_zero
         - fonctionnalités
             - use case
             - port
             - adapter
+        - app
 - tests
     - inbox_zero
         - fonctionnalités
