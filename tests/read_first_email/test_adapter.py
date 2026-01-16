@@ -5,7 +5,7 @@ from email.mime.text import MIMEText
 import pytest
 from testcontainers.core.container import DockerContainer
 
-from inbox_zero.adapters.email_repository_imap import EmailRepositoryImap
+from inbox_zero.read_first_email.adapter import EmailReaderImap
 
 
 def send_test_email(smtp_port, subject="Test Email", body="This is a test email body"):
@@ -41,7 +41,7 @@ def test_get_first_email_from_inbox(greenmail):
 
     send_test_email(smtp_port, subject="First Email", body="First body")
 
-    repository = EmailRepositoryImap(
+    email_reader = EmailReaderImap(
         host="localhost",
         port=imap_port,
         username="test@test.com",
@@ -49,7 +49,7 @@ def test_get_first_email_from_inbox(greenmail):
         use_ssl=False
     )
 
-    result = repository.get_first_email("INBOX")
+    result = email_reader.get_first_email("INBOX")
 
     assert result is not None
     assert result.subject == "First Email"
@@ -60,7 +60,7 @@ def test_get_first_email_from_inbox(greenmail):
 def test_get_first_email_when_inbox_is_empty(greenmail):
     imap_port = greenmail.get_exposed_port(3143)
 
-    repository = EmailRepositoryImap(
+    email_reader = EmailReaderImap(
         host="localhost",
         port=imap_port,
         username="test@test.com",
@@ -68,7 +68,7 @@ def test_get_first_email_when_inbox_is_empty(greenmail):
         use_ssl=False
     )
 
-    result = repository.get_first_email("INBOX")
+    result = email_reader.get_first_email("INBOX")
 
     assert result is None
 
@@ -81,7 +81,7 @@ def test_get_first_email_when_multiple_emails(greenmail):
     send_test_email(smtp_port, subject="Second Email", body="Second body")
     send_test_email(smtp_port, subject="Third Email", body="Third body")
 
-    repository = EmailRepositoryImap(
+    email_reader = EmailReaderImap(
         host="localhost",
         port=imap_port,
         username="test@test.com",
@@ -89,7 +89,7 @@ def test_get_first_email_when_multiple_emails(greenmail):
         use_ssl=False
     )
 
-    result = repository.get_first_email("INBOX")
+    result = email_reader.get_first_email("INBOX")
 
     assert result is not None
     assert result.subject == "First Email"

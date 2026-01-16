@@ -1,9 +1,9 @@
 from typing import Optional
-from inbox_zero.email_reader import EmailReader, EmailData, EmailUid
-from inbox_zero.ports.email_repository import EmailRepository
+from inbox_zero.shared.email_reader import EmailReader, EmailData
+from inbox_zero.read_first_email.port import EmailReaderPort
 
 
-class EmailRepositoryImap(EmailRepository):
+class EmailReaderImap(EmailReaderPort):
     def __init__(self, host: str, port: int, username: str, password: str, use_ssl: bool = True):
         self.email_reader = EmailReader(host, port, username, password, use_ssl)
 
@@ -12,6 +12,3 @@ class EmailRepositoryImap(EmailRepository):
         if len(emails) == 0:
             return None
         return emails[0]
-
-    def archive_first_email(self, folder: str, uid: EmailUid) -> bool:
-        return self.email_reader.archive_email(folder=folder, uid=uid)

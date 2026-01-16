@@ -62,3 +62,17 @@ def test_use_case(dependencies):
     use_case = CreateUserUseCase(repo)
     # ...
 ```
+## Organisation des dossiers
+Les dossiers sont organisés de la manière suivantes en vertical slice architecture : 
+
+- src
+    - inbox_zero
+        - fonctionnalités
+            - use case
+            - port
+            - adapter
+- tests
+    - inbox_zero
+        - fonctionnalités
+            - test use case
+            - test adapter

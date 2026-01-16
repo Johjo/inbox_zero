@@ -1,13 +1,13 @@
 from typing import Optional, Dict, List
 import pytest
-from pyqure import Key, pyqure, PyqureMemory
+from pyqure import pyqure, PyqureMemory
 
-from inbox_zero.email_reader import EmailData, EmailUid
-from inbox_zero.ports.email_repository import EmailRepository, EMAIL_REPOSITORY_KEY
-from inbox_zero.use_cases.read_first_email import ReadFirstEmailUseCase
+from inbox_zero.shared.email_reader import EmailData, EmailUid
+from inbox_zero.read_first_email.port import EmailReaderPort, EMAIL_READER_PORT_KEY
+from inbox_zero.read_first_email.use_case import ReadFirstEmailUseCase
 
 
-class EmailRepositoryForTest(EmailRepository):
+class EmailReaderForTest(EmailReaderPort):
     def __init__(self):
         self._emails: Dict[str, List[EmailData]] = {}
 
@@ -21,32 +21,6 @@ class EmailRepositoryForTest(EmailRepository):
             return None
         return self._emails[folder][0]
 
-    def archive_first_email(self, folder: str, uid: EmailUid) -> bool:
-        if folder not in self._emails or len(self._emails[folder]) == 0:
-            return False
-
-        # Chercher l'email par UID
-        email_to_archive = None
-        email_index = None
-        for index, email in enumerate(self._emails[folder]):
-            if email.uid == uid:
-                email_to_archive = email
-                email_index = index
-                break
-
-        if email_to_archive is None or email_index is None:
-            return False
-
-        # Retirer l'email du dossier source
-        self._emails[folder].pop(email_index)
-
-        # Ajouter l'email au dossier Archive
-        if "Archive" not in self._emails:
-            self._emails["Archive"] = []
-        self._emails["Archive"].append(email_to_archive)
-
-        return True
-
 
 @pytest.fixture
 def dependencies():
@@ -55,14 +29,14 @@ def dependencies():
 
 
 @pytest.fixture
-def repository(dependencies):
+def email_reader(dependencies):
     (provide, inject) = pyqure(dependencies)
-    repo = EmailRepositoryForTest()
-    provide(EMAIL_REPOSITORY_KEY, repo)
-    return repo
+    reader = EmailReaderForTest()
+    provide(EMAIL_READER_PORT_KEY, reader)
+    return reader
 
 
-def test_read_first_email_from_inbox(dependencies, repository):
+def test_read_first_email_from_inbox(dependencies, email_reader):
     email = EmailData(
         uid=EmailUid("1"),
         subject="Test Subject",
@@ -72,7 +46,7 @@ def test_read_first_email_from_inbox(dependencies, repository):
         body_html="<p>Test body</p>",
         attachments=[]
     )
-    repository.add_email("INBOX", email)
+    email_reader.add_email("INBOX", email)
 
     sut = ReadFirstEmailUseCase(dependencies)
 
@@ -84,7 +58,7 @@ def test_read_first_email_from_inbox(dependencies, repository):
     assert result.body_text == "Test body"
 
 
-def test_read_first_email_when_inbox_is_empty(dependencies, repository):
+def test_read_first_email_when_inbox_is_empty(dependencies, email_reader):
     sut = ReadFirstEmailUseCase(dependencies)
 
     result = sut.execute("INBOX")
@@ -92,7 +66,7 @@ def test_read_first_email_when_inbox_is_empty(dependencies, repository):
     assert result is None
 
 
-def test_read_first_email_when_multiple_emails(dependencies, repository):
+def test_read_first_email_when_multiple_emails(dependencies, email_reader):
     first_email = EmailData(
         uid=EmailUid("1"),
         subject="First Email",
@@ -112,8 +86,8 @@ def test_read_first_email_when_multiple_emails(dependencies, repository):
         attachments=[]
     )
 
-    repository.add_email("INBOX", first_email)
-    repository.add_email("INBOX", second_email)
+    email_reader.add_email("INBOX", first_email)
+    email_reader.add_email("INBOX", second_email)
 
     sut = ReadFirstEmailUseCase(dependencies)
 
@@ -124,7 +98,7 @@ def test_read_first_email_when_multiple_emails(dependencies, repository):
     assert result.sender == "sender1@test.com"
 
 
-def test_read_first_email_from_different_folder(dependencies, repository):
+def test_read_first_email_from_different_folder(dependencies, email_reader):
     email = EmailData(
         uid=EmailUid("1"),
         subject="Sent Email",
@@ -134,7 +108,7 @@ def test_read_first_email_from_different_folder(dependencies, repository):
         body_html="<p>Sent body</p>",
         attachments=[]
     )
-    repository.add_email("SENT", email)
+    email_reader.add_email("SENT", email)
 
     sut = ReadFirstEmailUseCase(dependencies)
 

@@ -1,31 +1,26 @@
-from typing import Optional, Dict, List
+from typing import Dict, List
 import pytest
-from pyqure import Key, pyqure, PyqureMemory
+from pyqure import pyqure, PyqureMemory
 
-from inbox_zero.email_reader import EmailData, EmailUid
-from inbox_zero.ports.email_repository import EmailRepository, EMAIL_REPOSITORY_KEY
-from inbox_zero.use_cases.archive_first_email import ArchiveFirstEmailUseCase
+from inbox_zero.shared.email_reader import EmailData, EmailUid
+from inbox_zero.archive_email.port import EmailArchiverPort, EMAIL_ARCHIVER_PORT_KEY
+from inbox_zero.archive_email.use_case import ArchiveEmailUseCase
 
 
-class EmailRepositoryForTest(EmailRepository):
+class EmailArchiverForTest(EmailArchiverPort):
     def __init__(self):
         self._emails: Dict[str, List[EmailData]] = {}
+        self._archived: Dict[str, List[EmailData]] = {}
 
     def add_email(self, folder: str, email: EmailData) -> None:
         if folder not in self._emails:
             self._emails[folder] = []
         self._emails[folder].append(email)
 
-    def get_first_email(self, folder: str) -> Optional[EmailData]:
-        if folder not in self._emails or len(self._emails[folder]) == 0:
-            return None
-        return self._emails[folder][0]
-
-    def archive_first_email(self, folder: str, uid: EmailUid) -> bool:
+    def archive_email(self, folder: str, uid: EmailUid) -> bool:
         if folder not in self._emails or len(self._emails[folder]) == 0:
             return False
 
-        # Chercher l'email par UID
         email_to_archive = None
         email_index = None
         for index, email in enumerate(self._emails[folder]):
@@ -37,13 +32,11 @@ class EmailRepositoryForTest(EmailRepository):
         if email_to_archive is None or email_index is None:
             return False
 
-        # Retirer l'email du dossier source
         self._emails[folder].pop(email_index)
 
-        # Ajouter l'email au dossier Archive
-        if "Archive" not in self._emails:
-            self._emails["Archive"] = []
-        self._emails["Archive"].append(email_to_archive)
+        if "Archive" not in self._archived:
+            self._archived["Archive"] = []
+        self._archived["Archive"].append(email_to_archive)
 
         return True
 
@@ -51,6 +44,21 @@ class EmailRepositoryForTest(EmailRepository):
         if folder not in self._emails:
             return 0
         return len(self._emails[folder])
+
+    def get_archived_count(self) -> int:
+        if "Archive" not in self._archived:
+            return 0
+        return len(self._archived["Archive"])
+
+    def get_first_archived(self) -> EmailData | None:
+        if "Archive" not in self._archived or len(self._archived["Archive"]) == 0:
+            return None
+        return self._archived["Archive"][0]
+
+    def get_first_email(self, folder: str) -> EmailData | None:
+        if folder not in self._emails or len(self._emails[folder]) == 0:
+            return None
+        return self._emails[folder][0]
 
 
 @pytest.fixture
@@ -60,14 +68,14 @@ def dependencies():
 
 
 @pytest.fixture
-def repository(dependencies):
+def email_archiver(dependencies):
     (provide, inject) = pyqure(dependencies)
-    repo = EmailRepositoryForTest()
-    provide(EMAIL_REPOSITORY_KEY, repo)
-    return repo
+    archiver = EmailArchiverForTest()
+    provide(EMAIL_ARCHIVER_PORT_KEY, archiver)
+    return archiver
 
 
-def test_archive_first_email_from_inbox(dependencies, repository):
+def test_archive_email_from_inbox(dependencies, email_archiver):
     email = EmailData(
         uid=EmailUid("1"),
         subject="Test Subject",
@@ -77,29 +85,29 @@ def test_archive_first_email_from_inbox(dependencies, repository):
         body_html="<p>Test body</p>",
         attachments=[]
     )
-    repository.add_email("INBOX", email)
+    email_archiver.add_email("INBOX", email)
 
-    sut = ArchiveFirstEmailUseCase(dependencies)
+    sut = ArchiveEmailUseCase(dependencies)
 
     result = sut.execute("INBOX", EmailUid("1"))
 
     assert result is True
-    assert repository.get_emails_count("INBOX") == 0
-    assert repository.get_emails_count("Archive") == 1
-    archived_email = repository.get_first_email("Archive")
+    assert email_archiver.get_emails_count("INBOX") == 0
+    assert email_archiver.get_archived_count() == 1
+    archived_email = email_archiver.get_first_archived()
     assert archived_email is not None
     assert archived_email.subject == "Test Subject"
 
 
-def test_archive_first_email_when_inbox_is_empty(dependencies, repository):
-    sut = ArchiveFirstEmailUseCase(dependencies)
+def test_archive_email_when_inbox_is_empty(dependencies, email_archiver):
+    sut = ArchiveEmailUseCase(dependencies)
 
     result = sut.execute("INBOX", EmailUid("1"))
 
     assert result is False
 
 
-def test_archive_first_email_when_multiple_emails(dependencies, repository):
+def test_archive_email_when_multiple_emails(dependencies, email_archiver):
     first_email = EmailData(
         uid=EmailUid("1"),
         subject="First Email",
@@ -119,25 +127,25 @@ def test_archive_first_email_when_multiple_emails(dependencies, repository):
         attachments=[]
     )
 
-    repository.add_email("INBOX", first_email)
-    repository.add_email("INBOX", second_email)
+    email_archiver.add_email("INBOX", first_email)
+    email_archiver.add_email("INBOX", second_email)
 
-    sut = ArchiveFirstEmailUseCase(dependencies)
+    sut = ArchiveEmailUseCase(dependencies)
 
     result = sut.execute("INBOX", EmailUid("1"))
 
     assert result is True
-    assert repository.get_emails_count("INBOX") == 1
-    assert repository.get_emails_count("Archive") == 1
-    remaining_email = repository.get_first_email("INBOX")
+    assert email_archiver.get_emails_count("INBOX") == 1
+    assert email_archiver.get_archived_count() == 1
+    remaining_email = email_archiver.get_first_email("INBOX")
     assert remaining_email is not None
     assert remaining_email.subject == "Second Email"
-    archived_email = repository.get_first_email("Archive")
+    archived_email = email_archiver.get_first_archived()
     assert archived_email is not None
     assert archived_email.subject == "First Email"
 
 
-def test_archive_first_email_from_different_folder(dependencies, repository):
+def test_archive_email_from_different_folder(dependencies, email_archiver):
     email = EmailData(
         uid=EmailUid("1"),
         subject="Sent Email",
@@ -147,12 +155,12 @@ def test_archive_first_email_from_different_folder(dependencies, repository):
         body_html="<p>Sent body</p>",
         attachments=[]
     )
-    repository.add_email("SENT", email)
+    email_archiver.add_email("SENT", email)
 
-    sut = ArchiveFirstEmailUseCase(dependencies)
+    sut = ArchiveEmailUseCase(dependencies)
 
     result = sut.execute("SENT", EmailUid("1"))
 
     assert result is True
-    assert repository.get_emails_count("SENT") == 0
-    assert repository.get_emails_count("Archive") == 1
+    assert email_archiver.get_emails_count("SENT") == 0
+    assert email_archiver.get_archived_count() == 1
