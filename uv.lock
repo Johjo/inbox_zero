@@ -155,32 +155,6 @@ wheels = [
 ]
 
 [[package]]
-name = "hello-world"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "imap-tools" },
-    { name = "streamlit" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "pyqure" },
-    { name = "pytest" },
-    { name = "testcontainers" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "imap-tools", specifier = ">=1.7.0" },
-    { name = "pyqure", marker = "extra == 'dev'", git = "https://github.com/Johjo/pyqure.git" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
-    { name = "streamlit", specifier = ">=1.31.0" },
-    { name = "testcontainers", marker = "extra == 'dev'", specifier = ">=4.0.0" },
-]
-provides-extras = ["dev"]
-
-[[package]]
 name = "idna"
 version = "3.11"
 source = { registry = "https://pypi.org/simple" }
@@ -197,6 +171,38 @@ sdist = { url = "https://files.pythonhosted.org/packages/b0/76/2d74bf4702d7d9fb2
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f9/8f/75524e1a040183cc437332e2de6e8f975c345fff8b5aaa35e0d20dec24f9/imap_tools-1.11.0-py3-none-any.whl", hash = "sha256:7c797b421fdf1b898b4ee0042fe02d10037d56f9acacca64086c2af36d830a24", size = 34855, upload-time = "2025-06-30T05:47:15.657Z" },
 ]
+
+[[package]]
+name = "inbox-zero"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "imap-tools" },
+    { name = "streamlit" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "pyqure" },
+    { name = "testcontainers" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "imap-tools", specifier = ">=1.7.0" },
+    { name = "pyqure", marker = "extra == 'dev'", git = "https://github.com/Johjo/pyqure.git" },
+    { name = "streamlit", specifier = ">=1.31.0" },
+    { name = "testcontainers", marker = "extra == 'dev'", specifier = ">=4.0.0" },
+]
+provides-extras = ["dev"]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pytest", specifier = ">=8.4.2" }]
 
 [[package]]
 name = "iniconfig"

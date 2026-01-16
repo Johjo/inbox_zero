@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "hello-world"
+name = "inbox_zero"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -15,7 +15,6 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.0.0",
     "testcontainers>=4.0.0",
     "pyqure @ git+https://github.com/Johjo/pyqure.git",
 ]
@@ -25,3 +24,8 @@ py-modules = ["main", "app"]
 
 [tool.mypy]
 ignore_missing_imports = true
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+]
