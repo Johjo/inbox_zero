@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
-from imap_tools import MailBox, BaseMailBox, MailMessage
+from typing import List, Optional, Any
+from imap_tools import MailBox, BaseMailBox, MailMessage  # type: ignore[attr-defined]
 import imaplib
 
 
@@ -22,11 +22,11 @@ class EmailData:
 
 
 class MailBoxNoSSL(BaseMailBox):
-    def __init__(self, host: str = 'localhost', port: int = 143):
+    def __init__(self, host: str = 'localhost', port: int = 143) -> None:
         self._host = host
         self._port = port
-        self._timeout = None
-        super().__init__()
+        self._timeout: float | None = None
+        super().__init__()  # type: ignore[no-untyped-call]
 
     def _get_mailbox_client(self) -> imaplib.IMAP4:
         return imaplib.IMAP4(self._host, self._port, timeout=self._timeout)
@@ -40,9 +40,9 @@ class EmailReader:
         self.password = password
         self.use_ssl = use_ssl
 
-    def _get_mailbox(self):
+    def _get_mailbox(self) -> Any:
         if self.use_ssl:
-            return MailBox(self.host, port=self.port)
+            return MailBox(self.host, port=self.port)  # type: ignore[no-untyped-call]
         else:
             return MailBoxNoSSL(self.host, port=self.port)
 
@@ -58,7 +58,7 @@ class EmailReader:
 
         return emails
 
-    def _parse_message(self, msg: MailMessage) -> EmailData:
+    def _parse_message(self, msg: Any) -> EmailData:
         attachment_names = [att.filename for att in msg.attachments]
 
         assert msg.uid is not None, "Email message must have a UID"
