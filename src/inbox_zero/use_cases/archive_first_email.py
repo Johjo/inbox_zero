@@ -1,5 +1,5 @@
-from ports.email_repository import EmailRepository, EMAIL_REPOSITORY_KEY
-from email_reader import EmailUid
+from inbox_zero.ports.email_repository import EMAIL_REPOSITORY_KEY
+from inbox_zero.email_reader import EmailUid
 from pyqure import pyqure, PyqureMemory
 
 

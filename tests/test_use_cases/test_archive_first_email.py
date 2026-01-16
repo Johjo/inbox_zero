@@ -2,9 +2,9 @@ from typing import Optional, Dict, List
 import pytest
 from pyqure import Key, pyqure, PyqureMemory
 
-from email_reader import EmailData, EmailUid
-from ports.email_repository import EmailRepository, EMAIL_REPOSITORY_KEY
-from use_cases.archive_first_email import ArchiveFirstEmailUseCase
+from inbox_zero.email_reader import EmailData, EmailUid
+from inbox_zero.ports.email_repository import EmailRepository, EMAIL_REPOSITORY_KEY
+from inbox_zero.use_cases.archive_first_email import ArchiveFirstEmailUseCase
 
 
 class EmailRepositoryForTest(EmailRepository):

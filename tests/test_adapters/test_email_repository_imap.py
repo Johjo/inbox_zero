@@ -5,7 +5,7 @@ from email.mime.text import MIMEText
 import pytest
 from testcontainers.core.container import DockerContainer
 
-from adapters.email_repository_imap import EmailRepositoryImap
+from inbox_zero.adapters.email_repository_imap import EmailRepositoryImap
 
 
 def send_test_email(smtp_port, subject="Test Email", body="This is a test email body"):

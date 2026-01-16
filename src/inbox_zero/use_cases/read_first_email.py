@@ -1,6 +1,6 @@
 from typing import Optional
-from email_reader import EmailData
-from ports.email_repository import EmailRepository, EMAIL_REPOSITORY_KEY
+from inbox_zero.email_reader import EmailData
+from inbox_zero.ports.email_repository import EMAIL_REPOSITORY_KEY
 from pyqure import pyqure, PyqureMemory
 
 

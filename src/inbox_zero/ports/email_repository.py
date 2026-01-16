@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Optional
-from email_reader import EmailData, EmailUid
+from inbox_zero.email_reader import EmailData, EmailUid
 from pyqure import Key
 
 

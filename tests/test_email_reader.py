@@ -7,7 +7,7 @@ from email import encoders
 import pytest
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.waiting_utils import wait_for_logs
-from email_reader import EmailReader
+from inbox_zero.email_reader import EmailReader
 
 
 @pytest.fixture(scope="function")

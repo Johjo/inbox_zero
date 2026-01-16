@@ -1,6 +1,6 @@
 from typing import Optional
-from email_reader import EmailReader, EmailData, EmailUid
-from ports.email_repository import EmailRepository
+from inbox_zero.email_reader import EmailReader, EmailData, EmailUid
+from inbox_zero.ports.email_repository import EmailRepository
 
 
 class EmailRepositoryImap(EmailRepository):
