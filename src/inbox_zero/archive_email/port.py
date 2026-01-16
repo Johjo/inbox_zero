@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
-from inbox_zero.shared.email_reader import EmailUid
+from inbox_zero.shared.email_reader import EmailUid, ImapConfig
 from pyqure import Key
 
 
 class EmailArchiverPort(ABC):
     @abstractmethod
-    def archive_email(self, folder: str, uid: EmailUid) -> bool:
+    def archive_email(self, config: ImapConfig, folder: str, uid: EmailUid) -> bool:
         pass
 
 

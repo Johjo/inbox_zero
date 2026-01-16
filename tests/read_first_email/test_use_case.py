@@ -2,13 +2,13 @@ from typing import Optional, Dict, List
 import pytest
 from pyqure import pyqure, PyqureMemory
 
-from inbox_zero.shared.email_reader import EmailData, EmailUid
+from inbox_zero.shared.email_reader import EmailData, EmailUid, ImapConfig
 from inbox_zero.read_first_email.port import EmailReaderPort, EMAIL_READER_PORT_KEY
 from inbox_zero.read_first_email.use_case import ReadFirstEmailUseCase
 
 
 class EmailReaderForTest(EmailReaderPort):
-    def __init__(self):
+    def __init__(self) -> None:
         self._emails: Dict[str, List[EmailData]] = {}
 
     def add_email(self, folder: str, email: EmailData) -> None:
@@ -16,27 +16,40 @@ class EmailReaderForTest(EmailReaderPort):
             self._emails[folder] = []
         self._emails[folder].append(email)
 
-    def get_first_email(self, folder: str) -> Optional[EmailData]:
+    def get_first_email(self, config: ImapConfig, folder: str) -> Optional[EmailData]:
         if folder not in self._emails or len(self._emails[folder]) == 0:
             return None
         return self._emails[folder][0]
 
 
 @pytest.fixture
-def dependencies():
+def dependencies() -> PyqureMemory:
     memory: PyqureMemory = {}
     return memory
 
 
 @pytest.fixture
-def email_reader(dependencies):
+def email_reader(dependencies: PyqureMemory) -> EmailReaderForTest:
     (provide, inject) = pyqure(dependencies)
     reader = EmailReaderForTest()
     provide(EMAIL_READER_PORT_KEY, reader)
     return reader
 
 
-def test_read_first_email_from_inbox(dependencies, email_reader):
+@pytest.fixture
+def config() -> ImapConfig:
+    return ImapConfig(
+        host="localhost",
+        port=993,
+        username="test@test.com",
+        password="password",
+        use_ssl=True
+    )
+
+
+def test_read_first_email_from_inbox(
+    dependencies: PyqureMemory, email_reader: EmailReaderForTest, config: ImapConfig
+) -> None:
     email = EmailData(
         uid=EmailUid("1"),
         subject="Test Subject",
@@ -50,7 +63,7 @@ def test_read_first_email_from_inbox(dependencies, email_reader):
 
     sut = ReadFirstEmailUseCase(dependencies)
 
-    result = sut.execute("INBOX")
+    result = sut.execute(config, "INBOX")
 
     assert result is not None
     assert result.subject == "Test Subject"
@@ -58,15 +71,19 @@ def test_read_first_email_from_inbox(dependencies, email_reader):
     assert result.body_text == "Test body"
 
 
-def test_read_first_email_when_inbox_is_empty(dependencies, email_reader):
+def test_read_first_email_when_inbox_is_empty(
+    dependencies: PyqureMemory, email_reader: EmailReaderForTest, config: ImapConfig
+) -> None:
     sut = ReadFirstEmailUseCase(dependencies)
 
-    result = sut.execute("INBOX")
+    result = sut.execute(config, "INBOX")
 
     assert result is None
 
 
-def test_read_first_email_when_multiple_emails(dependencies, email_reader):
+def test_read_first_email_when_multiple_emails(
+    dependencies: PyqureMemory, email_reader: EmailReaderForTest, config: ImapConfig
+) -> None:
     first_email = EmailData(
         uid=EmailUid("1"),
         subject="First Email",
@@ -91,14 +108,16 @@ def test_read_first_email_when_multiple_emails(dependencies, email_reader):
 
     sut = ReadFirstEmailUseCase(dependencies)
 
-    result = sut.execute("INBOX")
+    result = sut.execute(config, "INBOX")
 
     assert result is not None
     assert result.subject == "First Email"
     assert result.sender == "sender1@test.com"
 
 
-def test_read_first_email_from_different_folder(dependencies, email_reader):
+def test_read_first_email_from_different_folder(
+    dependencies: PyqureMemory, email_reader: EmailReaderForTest, config: ImapConfig
+) -> None:
     email = EmailData(
         uid=EmailUid("1"),
         subject="Sent Email",
@@ -112,7 +131,7 @@ def test_read_first_email_from_different_folder(dependencies, email_reader):
 
     sut = ReadFirstEmailUseCase(dependencies)
 
-    result = sut.execute("SENT")
+    result = sut.execute(config, "SENT")
 
     assert result is not None
     assert result.subject == "Sent Email"

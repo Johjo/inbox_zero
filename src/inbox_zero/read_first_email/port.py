@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import Optional
-from inbox_zero.shared.email_reader import EmailData
+from inbox_zero.shared.email_reader import EmailData, ImapConfig
 from pyqure import Key
 
 
 class EmailReaderPort(ABC):
     @abstractmethod
-    def get_first_email(self, folder: str) -> Optional[EmailData]:
+    def get_first_email(self, config: ImapConfig, folder: str) -> Optional[EmailData]:
         pass
 
 

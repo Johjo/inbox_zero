@@ -10,6 +10,15 @@ class EmailUid:
     value: str
 
 
+@dataclass(frozen=True)
+class ImapConfig:
+    host: str
+    port: int
+    username: str
+    password: str
+    use_ssl: bool = True
+
+
 @dataclass
 class EmailData:
     uid: EmailUid

@@ -2,13 +2,13 @@ from typing import Dict, List
 import pytest
 from pyqure import pyqure, PyqureMemory
 
-from inbox_zero.shared.email_reader import EmailData, EmailUid
+from inbox_zero.shared.email_reader import EmailData, EmailUid, ImapConfig
 from inbox_zero.archive_email.port import EmailArchiverPort, EMAIL_ARCHIVER_PORT_KEY
 from inbox_zero.archive_email.use_case import ArchiveEmailUseCase
 
 
 class EmailArchiverForTest(EmailArchiverPort):
-    def __init__(self):
+    def __init__(self) -> None:
         self._emails: Dict[str, List[EmailData]] = {}
         self._archived: Dict[str, List[EmailData]] = {}
 
@@ -17,7 +17,7 @@ class EmailArchiverForTest(EmailArchiverPort):
             self._emails[folder] = []
         self._emails[folder].append(email)
 
-    def archive_email(self, folder: str, uid: EmailUid) -> bool:
+    def archive_email(self, config: ImapConfig, folder: str, uid: EmailUid) -> bool:
         if folder not in self._emails or len(self._emails[folder]) == 0:
             return False
 
@@ -62,20 +62,33 @@ class EmailArchiverForTest(EmailArchiverPort):
 
 
 @pytest.fixture
-def dependencies():
+def dependencies() -> PyqureMemory:
     memory: PyqureMemory = {}
     return memory
 
 
 @pytest.fixture
-def email_archiver(dependencies):
+def email_archiver(dependencies: PyqureMemory) -> EmailArchiverForTest:
     (provide, inject) = pyqure(dependencies)
     archiver = EmailArchiverForTest()
     provide(EMAIL_ARCHIVER_PORT_KEY, archiver)
     return archiver
 
 
-def test_archive_email_from_inbox(dependencies, email_archiver):
+@pytest.fixture
+def config() -> ImapConfig:
+    return ImapConfig(
+        host="localhost",
+        port=993,
+        username="test@test.com",
+        password="password",
+        use_ssl=True
+    )
+
+
+def test_archive_email_from_inbox(
+    dependencies: PyqureMemory, email_archiver: EmailArchiverForTest, config: ImapConfig
+) -> None:
     email = EmailData(
         uid=EmailUid("1"),
         subject="Test Subject",
@@ -89,7 +102,7 @@ def test_archive_email_from_inbox(dependencies, email_archiver):
 
     sut = ArchiveEmailUseCase(dependencies)
 
-    result = sut.execute("INBOX", EmailUid("1"))
+    result = sut.execute(config, "INBOX", EmailUid("1"))
 
     assert result is True
     assert email_archiver.get_emails_count("INBOX") == 0
@@ -99,15 +112,19 @@ def test_archive_email_from_inbox(dependencies, email_archiver):
     assert archived_email.subject == "Test Subject"
 
 
-def test_archive_email_when_inbox_is_empty(dependencies, email_archiver):
+def test_archive_email_when_inbox_is_empty(
+    dependencies: PyqureMemory, email_archiver: EmailArchiverForTest, config: ImapConfig
+) -> None:
     sut = ArchiveEmailUseCase(dependencies)
 
-    result = sut.execute("INBOX", EmailUid("1"))
+    result = sut.execute(config, "INBOX", EmailUid("1"))
 
     assert result is False
 
 
-def test_archive_email_when_multiple_emails(dependencies, email_archiver):
+def test_archive_email_when_multiple_emails(
+    dependencies: PyqureMemory, email_archiver: EmailArchiverForTest, config: ImapConfig
+) -> None:
     first_email = EmailData(
         uid=EmailUid("1"),
         subject="First Email",
@@ -132,7 +149,7 @@ def test_archive_email_when_multiple_emails(dependencies, email_archiver):
 
     sut = ArchiveEmailUseCase(dependencies)
 
-    result = sut.execute("INBOX", EmailUid("1"))
+    result = sut.execute(config, "INBOX", EmailUid("1"))
 
     assert result is True
     assert email_archiver.get_emails_count("INBOX") == 1
@@ -145,7 +162,9 @@ def test_archive_email_when_multiple_emails(dependencies, email_archiver):
     assert archived_email.subject == "First Email"
 
 
-def test_archive_email_from_different_folder(dependencies, email_archiver):
+def test_archive_email_from_different_folder(
+    dependencies: PyqureMemory, email_archiver: EmailArchiverForTest, config: ImapConfig
+) -> None:
     email = EmailData(
         uid=EmailUid("1"),
         subject="Sent Email",
@@ -159,7 +178,7 @@ def test_archive_email_from_different_folder(dependencies, email_archiver):
 
     sut = ArchiveEmailUseCase(dependencies)
 
-    result = sut.execute("SENT", EmailUid("1"))
+    result = sut.execute(config, "SENT", EmailUid("1"))
 
     assert result is True
     assert email_archiver.get_emails_count("SENT") == 0

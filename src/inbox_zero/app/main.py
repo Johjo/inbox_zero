@@ -1,7 +1,7 @@
 import streamlit as st
 from pyqure import pyqure, PyqureMemory
 
-from inbox_zero.shared.email_reader import EmailData
+from inbox_zero.shared.email_reader import EmailData, ImapConfig
 from inbox_zero.read_first_email.port import EMAIL_READER_PORT_KEY
 from inbox_zero.read_first_email.adapter import EmailReaderImap
 from inbox_zero.archive_email.port import EMAIL_ARCHIVER_PORT_KEY
@@ -10,15 +10,12 @@ from inbox_zero.read_first_email.use_case import ReadFirstEmailUseCase
 from inbox_zero.archive_email.use_case import ArchiveEmailUseCase
 
 
-def create_dependencies(host: str, port: int, username: str, password: str, use_ssl: bool) -> PyqureMemory:
+def create_dependencies() -> PyqureMemory:
     memory: PyqureMemory = {}
     (provide, _) = pyqure(memory)
 
-    email_reader = EmailReaderImap(host, port, username, password, use_ssl)
-    email_archiver = EmailArchiverImap(host, port, username, password, use_ssl)
-
-    provide(EMAIL_READER_PORT_KEY, email_reader)
-    provide(EMAIL_ARCHIVER_PORT_KEY, email_archiver)
+    provide(EMAIL_READER_PORT_KEY, EmailReaderImap())
+    provide(EMAIL_ARCHIVER_PORT_KEY, EmailArchiverImap())
 
     return memory
 
@@ -50,12 +47,20 @@ def main() -> None:
         st.info("Veuillez configurer vos identifiants IMAP dans la barre latérale.")
         return
 
+    config = ImapConfig(
+        host=str(host),
+        port=int(port),
+        username=str(username),
+        password=str(password),
+        use_ssl=bool(use_ssl)
+    )
+
     try:
-        dependencies = create_dependencies(host, int(port), username, password, use_ssl)
+        dependencies = create_dependencies()
         read_use_case = ReadFirstEmailUseCase(dependencies)
         archive_use_case = ArchiveEmailUseCase(dependencies)
 
-        email = read_use_case.execute(folder)
+        email = read_use_case.execute(config, str(folder))
 
         if email is None:
             st.success("Inbox Zero atteint ! Aucun email à traiter.")
@@ -65,7 +70,7 @@ def main() -> None:
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("Archiver", type="primary"):
-                    archive_use_case.execute(folder, email.uid)
+                    archive_use_case.execute(config, str(folder), email.uid)
                     st.rerun()
             with col2:
                 if st.button("Rafraîchir"):
