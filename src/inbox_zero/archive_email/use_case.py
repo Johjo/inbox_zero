@@ -10,5 +10,5 @@ class ArchiveEmailUseCase:
         (provide, inject) = pyqure(dependencies)
         self.email_archiver = inject(EMAIL_ARCHIVER_PORT_KEY)
 
-    def execute(self, config: ImapConfig, folder: str, uid: EmailUid) -> bool:
-        return self.email_archiver.archive_email(config, folder, uid)
+    def execute(self, config: ImapConfig, uid: EmailUid) -> bool:
+        return self.email_archiver.archive_email(config, uid)

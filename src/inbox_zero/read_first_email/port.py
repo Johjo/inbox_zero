@@ -6,7 +6,7 @@ from pyqure import Key
 
 class EmailReaderPort(ABC):
     @abstractmethod
-    def get_first_email(self, config: ImapConfig, folder: str) -> Optional[EmailData]:
+    def get_first_email(self, config: ImapConfig) -> Optional[EmailData]:
         pass
 
 

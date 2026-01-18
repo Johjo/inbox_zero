@@ -17,6 +17,7 @@ class ImapConfig:
     username: str
     password: str
     use_ssl: bool = True
+    folder: str = "INBOX"
 
 
 @dataclass

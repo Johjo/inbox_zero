@@ -17,7 +17,8 @@ class EmailArchiverForTest(EmailArchiverPort):
             self._emails[folder] = []
         self._emails[folder].append(email)
 
-    def archive_email(self, config: ImapConfig, folder: str, uid: EmailUid) -> bool:
+    def archive_email(self, config: ImapConfig, uid: EmailUid) -> bool:
+        folder = config.folder
         if folder not in self._emails or len(self._emails[folder]) == 0:
             return False
 
@@ -82,7 +83,8 @@ def config() -> ImapConfig:
         port=993,
         username="test@test.com",
         password="password",
-        use_ssl=True
+        use_ssl=True,
+        folder="INBOX"
     )
 
 
@@ -102,7 +104,7 @@ def test_archive_email_from_inbox(
 
     sut = ArchiveEmailUseCase(dependencies)
 
-    result = sut.execute(config, "INBOX", EmailUid("1"))
+    result = sut.execute(config, EmailUid("1"))
 
     assert result is True
     assert email_archiver.get_emails_count("INBOX") == 0
@@ -117,7 +119,7 @@ def test_archive_email_when_inbox_is_empty(
 ) -> None:
     sut = ArchiveEmailUseCase(dependencies)
 
-    result = sut.execute(config, "INBOX", EmailUid("1"))
+    result = sut.execute(config, EmailUid("1"))
 
     assert result is False
 
@@ -149,7 +151,7 @@ def test_archive_email_when_multiple_emails(
 
     sut = ArchiveEmailUseCase(dependencies)
 
-    result = sut.execute(config, "INBOX", EmailUid("1"))
+    result = sut.execute(config, EmailUid("1"))
 
     assert result is True
     assert email_archiver.get_emails_count("INBOX") == 1
@@ -163,8 +165,16 @@ def test_archive_email_when_multiple_emails(
 
 
 def test_archive_email_from_different_folder(
-    dependencies: PyqureMemory, email_archiver: EmailArchiverForTest, config: ImapConfig
+    dependencies: PyqureMemory, email_archiver: EmailArchiverForTest
 ) -> None:
+    config = ImapConfig(
+        host="localhost",
+        port=993,
+        username="test@test.com",
+        password="password",
+        use_ssl=True,
+        folder="SENT"
+    )
     email = EmailData(
         uid=EmailUid("1"),
         subject="Sent Email",
@@ -178,7 +188,7 @@ def test_archive_email_from_different_folder(
 
     sut = ArchiveEmailUseCase(dependencies)
 
-    result = sut.execute(config, "SENT", EmailUid("1"))
+    result = sut.execute(config, EmailUid("1"))
 
     assert result is True
     assert email_archiver.get_emails_count("SENT") == 0

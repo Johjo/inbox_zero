@@ -48,11 +48,12 @@ def test_get_first_email_from_inbox(greenmail: Any) -> None:
         port=imap_port,
         username="test@test.com",
         password="test",
-        use_ssl=False
+        use_ssl=False,
+        folder="INBOX"
     )
 
     email_reader = EmailReaderImap()
-    result = email_reader.get_first_email(config, "INBOX")
+    result = email_reader.get_first_email(config)
 
     assert result is not None
     assert result.subject == "First Email"
@@ -68,11 +69,12 @@ def test_get_first_email_when_inbox_is_empty(greenmail: Any) -> None:
         port=imap_port,
         username="test@test.com",
         password="test",
-        use_ssl=False
+        use_ssl=False,
+        folder="INBOX"
     )
 
     email_reader = EmailReaderImap()
-    result = email_reader.get_first_email(config, "INBOX")
+    result = email_reader.get_first_email(config)
 
     assert result is None
 
@@ -90,11 +92,12 @@ def test_get_first_email_when_multiple_emails(greenmail: Any) -> None:
         port=imap_port,
         username="test@test.com",
         password="test",
-        use_ssl=False
+        use_ssl=False,
+        folder="INBOX"
     )
 
     email_reader = EmailReaderImap()
-    result = email_reader.get_first_email(config, "INBOX")
+    result = email_reader.get_first_email(config)
 
     assert result is not None
     assert result.subject == "First Email"

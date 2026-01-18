@@ -3,8 +3,8 @@ from inbox_zero.archive_email.port import EmailArchiverPort
 
 
 class EmailArchiverImap(EmailArchiverPort):
-    def archive_email(self, config: ImapConfig, folder: str, uid: EmailUid) -> bool:
+    def archive_email(self, config: ImapConfig, uid: EmailUid) -> bool:
         email_reader = EmailReader(
             config.host, config.port, config.username, config.password, config.use_ssl
         )
-        return email_reader.archive_email(folder=folder, uid=uid)
+        return email_reader.archive_email(folder=config.folder, uid=uid)

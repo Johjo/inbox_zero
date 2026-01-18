@@ -59,6 +59,7 @@ def display_accounts_page(dependencies: PyqureMemory) -> None:
             with st.container(border=True):
                 st.text(f"Serveur: {account.host}:{account.port}")
                 st.text(f"Email: {account.username}")
+                st.text(f"Dossier: {account.folder}")
                 st.text(f"SSL: {'Oui' if account.use_ssl else 'Non'}")
     else:
         st.info("Aucun compte enregistré.")
@@ -72,6 +73,7 @@ def display_accounts_page(dependencies: PyqureMemory) -> None:
         username = st.text_input("Email")
         password = st.text_input("Mot de passe", type="password")
         use_ssl = st.checkbox("Utiliser SSL", value=True)
+        folder = st.text_input("Dossier", value="INBOX")
 
         submitted = st.form_submit_button("Ajouter le compte")
 
@@ -83,6 +85,7 @@ def display_accounts_page(dependencies: PyqureMemory) -> None:
                     username=str(username),
                     password=str(password),
                     use_ssl=bool(use_ssl),
+                    folder=str(folder),
                 )
                 create_use_case = CreateImapAccountUseCase(dependencies)
                 create_use_case.execute(config)
@@ -102,18 +105,17 @@ def display_inbox_page(dependencies: PyqureMemory) -> None:
         st.warning("Aucun compte IMAP configuré. Ajoutez un compte dans l'onglet 'Comptes'.")
         return
 
-    account_names = [account.username for account in accounts]
-    selected_account = st.selectbox("Compte", account_names)
+    account_names = [f"{account.username} ({account.folder})" for account in accounts]
+    selected_index = st.selectbox("Compte", range(len(account_names)), format_func=lambda i: account_names[i])
 
-    if selected_account:
-        config = next(acc for acc in accounts if acc.username == selected_account)
-        folder = st.text_input("Dossier", value="INBOX")
+    if selected_index is not None:
+        config = accounts[selected_index]
 
         read_use_case = ReadFirstEmailUseCase(dependencies)
         archive_use_case = ArchiveEmailUseCase(dependencies)
 
         try:
-            email = read_use_case.execute(config, str(folder))
+            email = read_use_case.execute(config)
 
             if email is None:
                 st.success("Inbox Zero atteint ! Aucun email à traiter.")
@@ -123,7 +125,7 @@ def display_inbox_page(dependencies: PyqureMemory) -> None:
                 col1, col2 = st.columns(2)
                 with col1:
                     if st.button("Archiver", type="primary"):
-                        archive_use_case.execute(config, str(folder), email.uid)
+                        archive_use_case.execute(config, email.uid)
                         st.rerun()
                 with col2:
                     if st.button("Rafraîchir"):

@@ -5,7 +5,7 @@ from pyqure import Key
 
 class EmailArchiverPort(ABC):
     @abstractmethod
-    def archive_email(self, config: ImapConfig, folder: str, uid: EmailUid) -> bool:
+    def archive_email(self, config: ImapConfig, uid: EmailUid) -> bool:
         pass
 
 

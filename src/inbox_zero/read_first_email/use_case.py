@@ -11,5 +11,5 @@ class ReadFirstEmailUseCase:
         (provide, inject) = pyqure(dependencies)
         self.email_reader = inject(EMAIL_READER_PORT_KEY)
 
-    def execute(self, config: ImapConfig, folder: str = "INBOX") -> Optional[EmailData]:
-        return self.email_reader.get_first_email(config, folder)
+    def execute(self, config: ImapConfig) -> Optional[EmailData]:
+        return self.email_reader.get_first_email(config)

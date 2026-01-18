@@ -16,7 +16,8 @@ class EmailReaderForTest(EmailReaderPort):
             self._emails[folder] = []
         self._emails[folder].append(email)
 
-    def get_first_email(self, config: ImapConfig, folder: str) -> Optional[EmailData]:
+    def get_first_email(self, config: ImapConfig) -> Optional[EmailData]:
+        folder = config.folder
         if folder not in self._emails or len(self._emails[folder]) == 0:
             return None
         return self._emails[folder][0]
@@ -43,7 +44,8 @@ def config() -> ImapConfig:
         port=993,
         username="test@test.com",
         password="password",
-        use_ssl=True
+        use_ssl=True,
+        folder="INBOX"
     )
 
 
@@ -63,7 +65,7 @@ def test_read_first_email_from_inbox(
 
     sut = ReadFirstEmailUseCase(dependencies)
 
-    result = sut.execute(config, "INBOX")
+    result = sut.execute(config)
 
     assert result is not None
     assert result.subject == "Test Subject"
@@ -76,7 +78,7 @@ def test_read_first_email_when_inbox_is_empty(
 ) -> None:
     sut = ReadFirstEmailUseCase(dependencies)
 
-    result = sut.execute(config, "INBOX")
+    result = sut.execute(config)
 
     assert result is None
 
@@ -108,7 +110,7 @@ def test_read_first_email_when_multiple_emails(
 
     sut = ReadFirstEmailUseCase(dependencies)
 
-    result = sut.execute(config, "INBOX")
+    result = sut.execute(config)
 
     assert result is not None
     assert result.subject == "First Email"
@@ -116,8 +118,16 @@ def test_read_first_email_when_multiple_emails(
 
 
 def test_read_first_email_from_different_folder(
-    dependencies: PyqureMemory, email_reader: EmailReaderForTest, config: ImapConfig
+    dependencies: PyqureMemory, email_reader: EmailReaderForTest
 ) -> None:
+    config = ImapConfig(
+        host="localhost",
+        port=993,
+        username="test@test.com",
+        password="password",
+        use_ssl=True,
+        folder="SENT"
+    )
     email = EmailData(
         uid=EmailUid("1"),
         subject="Sent Email",
@@ -131,7 +141,7 @@ def test_read_first_email_from_different_folder(
 
     sut = ReadFirstEmailUseCase(dependencies)
 
-    result = sut.execute(config, "SENT")
+    result = sut.execute(config)
 
     assert result is not None
     assert result.subject == "Sent Email"
